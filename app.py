@@ -4,12 +4,13 @@
 # import pathlib
 # import sys
 # sys.path.insert(0, str(pathlib.Path(__file__).parent.resolve())+"/bottle")
-from bottle import default_app, get, post, request, response, run, static_file, template
+from bottle import default_app, get, post, response, run, static_file, template, request
 import x
 from icecream import ic
 import bcrypt
 import json
 import credentials
+
 
 ##############################
 @get("/app.css")
@@ -22,11 +23,11 @@ def _():
 def _(file_name):
     return static_file(file_name+".js", ".")
 
-
 ##############################
 @get("/test")
 def _():
     return [{"name":"one"}]
+
 
 
 ##############################
@@ -34,30 +35,28 @@ def _():
 def _(item_splash_image):
     return static_file(item_splash_image, "images")
 
-
 ##############################
 @get("/")
 def _():
     try:
         db = x.db()
         q = db.execute("SELECT * FROM items ORDER BY item_created_at LIMIT 0, ?", (x.ITEMS_PER_PAGE,))
+        # return "x"
         items = q.fetchall()
         ic(items)
         is_logged = False
-        try:    
+
+        try:
             x.validate_user_logged()
-            is_logged = True
+            is_logged =True
         except:
             pass
-
-        return template("index.html", items=items, mapbox_token=credentials.mapbox_token, 
-                        is_logged=is_logged)
+        return template("index.html", items=items, mapbox_token=credentials.mapbox_token, is_logged=is_logged)
     except Exception as ex:
         ic(ex)
         return ex
     finally:
         if "db" in locals(): db.close()
-
 
 ##############################
 @get("/items/page/<page_number>")
@@ -74,9 +73,10 @@ def _(page_number):
         ic(items)
 
         is_logged = False
+
         try:
             x.validate_user_logged()
-            is_logged = True
+            is_logged =True
         except:
             pass
 
@@ -102,6 +102,9 @@ def _(page_number):
         if "db" in locals(): db.close()
 
 
+
+
+
 ##############################
 @get("/login")
 def _():
@@ -115,18 +118,72 @@ def _():
     try:
         x.no_cache()
         x.validate_user_logged()
-        db = x.db()
+        db=x.db()
         q = db.execute("SELECT * FROM items ORDER BY item_created_at LIMIT 0, ?", (x.ITEMS_PER_PAGE,))
+        # return "x"
         items = q.fetchall()
-        ic(items)    
+        ic(items)
         return template("profile.html", is_logged=True, items=items)
+        
     except Exception as ex:
         ic(ex)
         response.status = 303 
         response.set_header('Location', '/login')
         return
+
+
+
+##############################
+@post("/toogle_item_block")
+def _():
+    try:
+        item_id = request.forms.get("item_id", '')
+        return f"""
+        <template mix-target="[id='{item_id}']" mix-replace>
+
+            <form id="{item_id}">
+
+            <input name="item_id" type="text" value="{item_id}" class="hidden">
+             <button
+            mix-data="[id='{item_id}']"
+            mix-post="/toogle_item_unblock"
+             >
+            Unblock
+        </button>
+
+        </form>
+        </template>
+        """
+    except Exception as ex:
+        pass
     finally:
         if "db" in locals(): db.close()
+
+##############################
+@post("/toogle_item_unblock")
+def _():
+    try:
+        item_id = request.forms.get("item_id", '')
+        return f"""
+        <template mix-target="[id='{item_id}']" mix-replace>
+
+         <form id="{item_id}">
+            <input name="item_id" type="text" value="{item_id}" class="hidden">
+        <button
+            mix-data="[id='{item_id}']"
+            mix-post="/toogle_item_block"
+        >
+           Block
+        </button>
+         </form>
+        </template>
+        """
+    except Exception as ex:
+        pass
+    finally:
+        if "db" in locals(): db.close()
+
+
 
 
 ##############################
@@ -134,9 +191,8 @@ def _():
 def _():
     response.delete_cookie("user")
     response.status = 303
-    response.set_header('Location', '/login')
-    return
-
+    response.set_header("Location", "/login")
+    return """<template mix-redirect="/login"></template>"""
 
 ##############################
 @get("/api")
@@ -183,8 +239,8 @@ def _():
         except:
             is_cookie_https = False        
         response.set_cookie("user", user, secret=x.COOKIE_SECRET, httponly=True, secure=is_cookie_https)
-        
         frm_login = template("__frm_login")
+
         return f"""
         <template mix-target="frm_login" mix-replace>
             {frm_login}
@@ -217,21 +273,6 @@ def _():
     finally:
         if "db" in locals(): db.close()
 
-
-##############################
-@post("/toogle_item_block")
-def _():
-    try:
-        item_id = request.forms.get("item_id", '')
-        return f"""
-        <template mix-target="[id='{item_id}']" mix-replace>
-            xxxxx
-        </template>
-        """
-    except Exception as ex:
-        pass
-    finally:
-        if "db" in locals(): db.close()
 
 
 ##############################

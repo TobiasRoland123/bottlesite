@@ -646,6 +646,10 @@ video {
   display: grid;
 }
 
+.hidden {
+  display: none;
+}
+
 .aspect-square {
   aspect-ratio: 1 / 1;
 }
@@ -692,6 +696,10 @@ video {
 
 .w-full {
   width: 100%;
+}
+
+.max-w-96 {
+  max-width: 24rem;
 }
 
 .grid-cols-1 {

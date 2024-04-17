@@ -1,4 +1,4 @@
-%include("_header")
+%include("_header", is_logged=is_logged)
 
 <main class="flex">
     <div class="w-full h-full">
@@ -24,12 +24,10 @@
         </div>    
     </div>
     <div class="w-full pb-16 px-4">
-        <div id="items" class="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-10">
-            % for item in items:
-                %include("_item")
-            % end
-        </div>
-        %include("__btn_more", page_number=2)
+        
+
+
+        %include("__item_list", items=items)
     </div>
 
 </main>
