@@ -1,7 +1,7 @@
 # path to bottle main package to replace with own bottle
 # /home/mysite/.local/lib/python3.10/site-packages/bottle.py
 
-from bottle import default_app, get, post, response, run, static_file, template
+from bottle import default_app, get, post, response, run, static_file, template, delete, put
 # import pathlib
 # import sys
 # sys.path.insert(0, str(pathlib.Path(__file__).parent.resolve())+"/bottle")
@@ -36,18 +36,7 @@ def _(item_splash_image):
     return static_file(item_splash_image, "images")
 
 
-##############################
-@get("/arango")
-def _():
-    try:
-        q = {"query":"FOR item IN items LIMIT 1 RETURN item"}
-        items = x.arango(q)
-        return items
-    except Exception as ex:
-        ic(ex)
-        return ex
-    finally:
-        pass
+
 
 ##############################
 @get("/")
@@ -246,6 +235,103 @@ def _():
         pass
     finally:
         if "db" in locals(): db.close()
+
+
+
+##############################
+@get("/arango/items")
+def _():
+    try:
+        q = {"query":"FOR item IN items LIMIT 1 RETURN item"}
+        items = x.arango(q)
+        return items
+    except Exception as ex:
+        ic(ex)
+        return ex
+    finally:
+        pass
+
+
+##############################
+@delete("/arango/items/<key>")
+def _(key):
+    try:
+        dynamic = {"_key": key}
+        q = {
+            "query": "REMOVE @dynamic IN items RETURN OLD",
+            "bindVars": {
+                "dynamic": dynamic
+            }
+        }
+        items = x.arango(q)
+        return items
+    except Exception as ex:
+        ic(ex)
+        return ex
+    finally:
+        pass
+
+
+##############################
+@post("/arango/items")
+def _():
+    try:
+        # TODO: validate
+        item_name = request.forms.get("item_name", '')
+        item = {"name":item_name}
+        q= {"query": "INSERT @item IN items RETURN NEW", "bindVars":{"item" : item}}
+        ic(item_name)
+        item = x.arango(q)
+        return item
+        pass
+    except Exception as ex:
+        ic(ex)
+        return ex
+    finally:
+        pass
+
+
+
+
+##############################
+@put("/arango/items/<key>")
+def _(key):
+    try:
+        # TODO: validate
+        new_item_name = request.forms.get("new_item_name", '')
+        item = {"name":new_item_name}
+        q = {
+            "query": "UPDATE @item_id WITH @item_name IN items RETURN NEW",
+            "bindVars": {
+            "item_id": key,
+            "item_name": item
+            }
+        }
+        ic(new_item_name)
+        item = x.arango(q)
+        return item
+        pass
+    except Exception as ex:
+        ic(ex)
+        return ex
+    finally:
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##############################
